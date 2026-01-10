@@ -1,7 +1,6 @@
 {
   "version": 2,
   "buildCommand": "npm run build && php artisan optimize:clear && php artisan config:cache",
-  "framework": "laravel",
   "regions": ["sin1"],
   "env": {
     "APP_NAME": "Alba Autocare",
