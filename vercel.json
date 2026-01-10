@@ -22,7 +22,7 @@
   },
   "functions": {
     "api/index.php": {
-      "runtime": "php-8.3"
+      "runtime": "vercel-php@0.5.0"
     }
   },
   "rewrites": [
