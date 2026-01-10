@@ -3,9 +3,8 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build && npm run vercel-build",
-        "dev": "vite",
-        "vercel-build": "echo Build complete"
+        "build": "vite build",
+        "dev": "vite"
     },
     "devDependencies": {
         "@tailwindcss/forms": "^0.5.2",

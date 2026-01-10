@@ -1,40 +1,64 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "api/index.php",
-            "use": "vercel-php@0.7.1"
-        },
-        {
-            "src": "package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "distDir": "public"
-            }
-        }
-    ],
-    "routes": [
-        {
-            "src": "/(css|js)/(.*)",
-            "dest": "public/$1/$2"
-        },
-        {
-            "src": "/(.*)",
-            "dest": "api/index.php"
-        }
-    ],
-    "env": {
-        "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "APP_URL": "https://alba-autocare.vercel.app",
-        "APP_CONFIG_CACHE": "/tmp/config.php",
-        "APP_EVENTS_CACHE": "/tmp/events.php",
-        "APP_PACKAGES_CACHE": "/tmp/packages.php",
-        "APP_ROUTES_CACHE": "/tmp/routes.php",
-        "APP_SERVICES_CACHE": "/tmp/services.php",
-        "VIEW_COMPILED_PATH": "/tmp",
-        "CACHE_DRIVER": "array",
-        "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie"
+  "version": 2,
+  "buildCommand": "npm run build && php artisan optimize:clear && php artisan config:cache",
+  "framework": "laravel",
+  "regions": ["sin1"],
+  "env": {
+    "APP_NAME": {
+      "description": "Application Name"
+    },
+    "APP_KEY": {
+      "description": "Application Encryption Key"
+    },
+    "APP_ENV": {
+      "value": "production"
+    },
+    "APP_DEBUG": {
+      "value": "false"
+    },
+    "LOG_CHANNEL": {
+      "value": "stderr"
+    },
+    "LOG_LEVEL": {
+      "value": "error"
+    },
+    "DB_CONNECTION": {
+      "value": "pgsql"
+    },
+    "DB_HOST": {
+      "description": "Supabase Host URL"
+    },
+    "DB_PORT": {
+      "value": "5432"
+    },
+    "DB_DATABASE": {
+      "description": "Supabase Database Name"
+    },
+    "DB_USERNAME": {
+      "description": "Supabase Username"
+    },
+    "DB_PASSWORD": {
+      "description": "Supabase Password"
+    },
+    "SESSION_DRIVER": {
+      "value": "file"
+    },
+    "QUEUE_CONNECTION": {
+      "value": "sync"
+    },
+    "CACHE_STORE": {
+      "value": "array"
     }
+  },
+  "functions": {
+    "api/index.php": {
+      "runtime": "php-8.3"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.php"
+    }
+  ]
 }

@@ -13,9 +13,9 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                     <div>
                         <h1 class="text-3xl font-bold text-white mb-2">
-                            Selamat Datang, {{ Auth::user()->name }}
+                            Selamat Datang di Alba AutoCare
                         </h1>
-                        <p class="text-neutral-400">Alba AutoCare - Sistem Manajemen Perawatan Kendaraan Premium</p>
+                        <p class="text-neutral-400">Sistem Manajemen Perawatan Kendaraan Premium</p>
                     </div>
                     <div class="flex items-center space-x-3">
                         <div class="text-right">
