@@ -4,51 +4,22 @@
   "framework": "laravel",
   "regions": ["sin1"],
   "env": {
-    "APP_NAME": {
-      "description": "Application Name"
-    },
-    "APP_KEY": {
-      "description": "Application Encryption Key"
-    },
-    "APP_ENV": {
-      "value": "production"
-    },
-    "APP_DEBUG": {
-      "value": "false"
-    },
-    "LOG_CHANNEL": {
-      "value": "stderr"
-    },
-    "LOG_LEVEL": {
-      "value": "error"
-    },
-    "DB_CONNECTION": {
-      "value": "pgsql"
-    },
-    "DB_HOST": {
-      "description": "Supabase Host URL"
-    },
-    "DB_PORT": {
-      "value": "5432"
-    },
-    "DB_DATABASE": {
-      "description": "Supabase Database Name"
-    },
-    "DB_USERNAME": {
-      "description": "Supabase Username"
-    },
-    "DB_PASSWORD": {
-      "description": "Supabase Password"
-    },
-    "SESSION_DRIVER": {
-      "value": "file"
-    },
-    "QUEUE_CONNECTION": {
-      "value": "sync"
-    },
-    "CACHE_STORE": {
-      "value": "array"
-    }
+    "APP_NAME": "Alba Autocare",
+    "APP_KEY": "base64:TyFcuWcyDx6l4vu9h5FKvFgk5wiPDUfvQkWJe9plY/Q=",
+    "APP_ENV": "production",
+    "APP_DEBUG": "false",
+    "APP_URL": "https://alba-autocare.vercel.app",
+    "LOG_CHANNEL": "stderr",
+    "LOG_LEVEL": "error",
+    "DB_CONNECTION": "pgsql",
+    "DB_HOST": "@DB_HOST",
+    "DB_PORT": "5432",
+    "DB_DATABASE": "postgres",
+    "DB_USERNAME": "postgres",
+    "DB_PASSWORD": "@DB_PASSWORD",
+    "SESSION_DRIVER": "file",
+    "QUEUE_CONNECTION": "sync",
+    "CACHE_STORE": "array"
   },
   "functions": {
     "api/index.php": {
