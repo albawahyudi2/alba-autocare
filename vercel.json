@@ -11,11 +11,11 @@
     "LOG_CHANNEL": "stderr",
     "LOG_LEVEL": "error",
     "DB_CONNECTION": "pgsql",
-    "DB_HOST": "@DB_HOST",
+    "DB_HOST": "xmbltsofzpxfmdmuczen.supabase.co",
     "DB_PORT": "5432",
     "DB_DATABASE": "postgres",
     "DB_USERNAME": "postgres",
-    "DB_PASSWORD": "@DB_PASSWORD",
+    "DB_PASSWORD": "your_supabase_password",
     "SESSION_DRIVER": "file",
     "QUEUE_CONNECTION": "sync",
     "CACHE_STORE": "array"
