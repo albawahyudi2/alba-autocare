@@ -165,12 +165,5 @@ try {
     
     error_log('[Laravel Error] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 }
-            file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
-            error_log('Migrations completed successfully');
-        } catch (\Exception $e) {
-            error_log('Migration failed: ' . $e->getMessage());
-        }
-    }
-}
 
 $app->handleRequest(Request::capture());
