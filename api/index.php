@@ -5,14 +5,11 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Enable error reporting for debugging
+// Configure for Vercel serverless environment
 if (getenv('VERCEL') === '1') {
-    ini_set('display_errors', '1');
-    error_reporting(E_ALL);
-    
     // Create necessary directories in /tmp
     $tmpDirs = [
-        '/tmp/storage/framework/cache',
+        '/tmp/storage/framework/cache/data',
         '/tmp/storage/framework/sessions',
         '/tmp/storage/framework/views',
         '/tmp/storage/logs',
@@ -44,15 +41,49 @@ try {
     }
     
     $app->handleRequest(Request::capture());
-} catch (\Exception $e) {
-    // Show error for debugging
+} catch (\Throwable $e) {
+    // Fallback error page
     http_response_code(500);
-    header('Content-Type: application/json');
-    echo json_encode([
-        'error' => $e->getMessage(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine(),
-        'trace' => explode("\n", $e->getTraceAsString())
-    ], JSON_PRETTY_PRINT);
-    error_log('Laravel Error: ' . $e->getMessage());
+    
+    // If it's a view error, show simple HTML error page
+    if (strpos($e->getMessage(), 'view') !== false || strpos($e->getMessage(), 'Target class') !== false) {
+        echo '<!DOCTYPE html>
+<html>
+<head>
+    <title>Application Error</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 50px; background: #f5f5f5; }
+        .error { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #e74c3c; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <div class="error">
+        <h1>⚠️ Application Bootstrap Error</h1>
+        <p><strong>Error:</strong> ' . htmlspecialchars($e->getMessage()) . '</p>
+        <p><strong>Type:</strong> ' . htmlspecialchars(get_class($e)) . '</p>
+        <p><strong>File:</strong> ' . htmlspecialchars($e->getFile()) . ':' . $e->getLine() . '</p>
+        <hr>
+        <p>This error typically occurs when Laravel cannot load its service providers.</p>
+        <p><strong>Troubleshooting:</strong></p>
+        <ul>
+            <li>Check if all environment variables are set correctly in Vercel</li>
+            <li>Verify database connection: <a href="/test">/test</a></li>
+            <li>Check Vercel deployment logs for build errors</li>
+        </ul>
+    </div>
+</body>
+</html>';
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'type' => get_class($e),
+        ], JSON_PRETTY_PRINT);
+    }
+    
+    error_log('Laravel Bootstrap Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 }
