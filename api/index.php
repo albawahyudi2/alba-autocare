@@ -1,71 +1,93 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| Laravel Entry Point for Vercel Serverless
+|--------------------------------------------------------------------------
+*/
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Configure storage for Vercel (read-only filesystem) - MUST BE BEFORE BOOTSTRAP
-if (getenv('VERCEL') === '1') {
-    // Set storage path as environment variable before Laravel loads
-    $_ENV['APP_STORAGE'] = '/tmp/storage';
-    putenv('APP_STORAGE=/tmp/storage');
-    
-    // Create necessary directories in /tmp
-    $tmpDirs = [
+// Vercel serverless configuration
+$isVercel = (getenv('VERCEL') === '1');
+
+if ($isVercel) {
+    // Create storage directories in /tmp (writable in Vercel)
+    $storageDirs = [
         '/tmp/storage/framework/cache/data',
-        '/tmp/storage/framework/sessions',
+        '/tmp/storage/framework/sessions',  
         '/tmp/storage/framework/views',
         '/tmp/storage/logs',
     ];
     
-    foreach ($tmpDirs as $dir) {
-        if (!file_exists($dir)) {
-            @mkdir($dir, 0755, true);
-        }
+    foreach ($storageDirs as $dir) {
+        @mkdir($dir, 0755, true);
     }
+    
+    // Set environment variables for storage path
+    putenv('APP_STORAGE_PATH=/tmp/storage');
 }
 
-// Determine if the application is in maintenance mode...
-if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+// Check maintenance mode
+$maintenance = __DIR__.'/../storage/framework/maintenance.php';
+if (file_exists($maintenance)) {
     require $maintenance;
 }
 
-// Register the Composer autoloader...
-require __DIR__.'/../vendor/autoload.php';
+// Load Composer autoloader
+$autoload = __DIR__.'/../vendor/autoload.php';
+if (!file_exists($autoload)) {
+    die('Composer autoloader not found. Please run: composer install');
+}
+require $autoload;
 
-// Bootstrap Laravel and handle the request...
+// Bootstrap Laravel
 try {
     $app = require_once __DIR__.'/../bootstrap/app.php';
     
-    // Override storage path for Vercel - set as early as possible
-    if (getenv('VERCEL') === '1') {
+    // Override storage path for Vercel
+    if ($isVercel) {
         $app->useStoragePath('/tmp/storage');
-        
-        // Force override storage path in all configs
         $app->instance('path.storage', '/tmp/storage');
     }
     
-    $response = $app->handleRequest(Request::capture());
+    // Handle the request
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+    $request = Request::capture();
+    $response = $kernel->handle($request);
     
+    // Send response
     $response->send();
     
-    $app->terminate(Request::capture(), $response);
+    // Terminate
+    $kernel->terminate($request, $response);
     
 } catch (\Throwable $e) {
+    // Log error
+    error_log('[Laravel Fatal Error] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+    
+    // User-friendly error page
     http_response_code(500);
     header('Content-Type: text/html; charset=utf-8');
     
-    echo '<!DOCTYPE html>
+    $errorMsg = htmlspecialchars($e->getMessage());
+    $errorFile = htmlspecialchars($e->getFile());
+    $errorLine = $e->getLine();
+    
+    echo <<<HTML
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Error - Alba Autocare</title>
+    <title>Application Error - Alba Autocare</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
@@ -73,99 +95,74 @@ try {
             justify-content: center;
             padding: 20px;
         }
-        .container {
+        .error-container {
             background: white;
-            border-radius: 16px;
+            border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             max-width: 600px;
             width: 100%;
             overflow: hidden;
         }
-        .header {
+        .error-header {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             padding: 40px;
             text-align: center;
             color: white;
         }
-        .header h1 { font-size: 48px; margin-bottom: 10px; }
-        .header p { font-size: 18px; opacity: 0.9; }
-        .content { padding: 40px; }
-        .error-box {
+        .error-header h1 { font-size: 48px; margin-bottom: 10px; }
+        .error-content { padding: 30px; }
+        .error-message {
             background: #fff3cd;
             border-left: 4px solid #ffc107;
-            padding: 20px;
+            padding: 15px;
             margin: 20px 0;
             border-radius: 4px;
+            font-size: 14px;
+            color: #856404;
         }
-        .error-box strong { color: #856404; display: block; margin-bottom: 5px; }
-        .error-box code { 
-            background: #fff; 
-            padding: 2px 6px; 
-            border-radius: 3px; 
+        .error-details { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 4px;
             font-size: 13px;
-            color: #e74c3c;
-        }
-        .info { color: #666; line-height: 1.6; margin: 20px 0; }
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
+            color: #666;
+            margin: 15px 0;
         }
         .btn {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: transform 0.2s;
-        }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-primary {
+            display: inline-block;
+            padding: 12px 30px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }
-        .btn-secondary {
-            background: #f8f9fa;
-            color: #333;
-            border: 2px solid #dee2e6;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
+    <div class="error-container">
+        <div class="error-header">
             <h1>⚠️</h1>
             <p>Application Error</p>
         </div>
-        <div class="content">
-            <div class="error-box">
-                <strong>Error Message:</strong>
-                <code>' . htmlspecialchars($e->getMessage()) . '</code>
+        <div class="error-content">
+            <div class="error-message">
+                <strong>Error:</strong> {$errorMsg}
             </div>
-            
-            <div class="info">
-                <p><strong>What happened?</strong></p>
-                <p>The application encountered an error while trying to start. This usually happens when the Laravel framework cannot properly initialize in the serverless environment.</p>
-                
-                <p style="margin-top: 15px;"><strong>Common causes:</strong></p>
-                <ul style="margin-left: 20px; margin-top: 10px;">
-                    <li>Missing environment variables</li>
-                    <li>Database connection issues</li>
-                    <li>Service provider registration problems</li>
-                </ul>
+            <div class="error-details">
+                <strong>File:</strong> {$errorFile}<br>
+                <strong>Line:</strong> {$errorLine}
             </div>
-            
-            <div class="actions">
-                <a href="/" class="btn btn-primary">Try Again</a>
-                <a href="mailto:support@alba-autocare.com" class="btn btn-secondary">Contact Support</a>
-            </div>
+            <p style="color: #666; line-height: 1.6;">
+                The application encountered an error. Please try refreshing the page or contact support if the problem persists.
+            </p>
+            <a href="/debug" class="btn">View Debug Info</a>
         </div>
     </div>
 </body>
-</html>';
-    
-    error_log('[Laravel Error] ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+</html>
+HTML;
 }
+
 
 $app->handleRequest(Request::capture());
