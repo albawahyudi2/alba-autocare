@@ -1,27 +1,20 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 
-// Health check endpoint
-Route::get('/health', function () {
-    return response()->json(['status' => 'ok']);
-});
+define('LARAVEL_START', microtime(true));
 
-// Database connection test
-Route::get('/db-check', function () {
-    try {
-        \DB::connection()->getPdo();
-        return response()->json(['status' => 'Database connection OK']);
-    } catch (\Exception $e) {
-        return response()->json(['status' => 'Database connection failed', 'error' => $e->getMessage()], 500);
-    }
-});
+// Determine if the application is in maintenance mode...
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
+}
+
+// Register the Composer autoloader...
+require __DIR__.'/../vendor/autoload.php';
+
+// Bootstrap Laravel and handle the request...
+/** @var Application $app */
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+$app->handleRequest(Request::capture());
