@@ -20,13 +20,6 @@ if (getenv('VERCEL') === '1') {
             @mkdir($dir, 0755, true);
         }
     }
-    
-    // Initialize SQLite database
-    $dbPath = '/tmp/database.sqlite';
-    if (!file_exists($dbPath)) {
-        touch($dbPath);
-        $autoMigrate = true;
-    }
 }
 
 // Determine if the application is in maintenance mode...
@@ -44,15 +37,6 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 // Override storage path for Vercel
 if (getenv('VERCEL') === '1') {
     $app->useStoragePath('/tmp/storage');
-}
-
-// Run migrations if this is first time setup on Vercel
-if (isset($autoMigrate) && $autoMigrate) {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-    } catch (\Exception $e) {
-        error_log('Migration failed: ' . $e->getMessage());
-    }
 }
 
 $app->handleRequest(Request::capture());
