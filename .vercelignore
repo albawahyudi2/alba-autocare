@@ -8,7 +8,6 @@
 .DS_Store
 storage/logs
 storage/app/private
-bootstrap/cache/*
 *.log
 .env.backup
 .phpunit.result.cache

@@ -11,13 +11,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Ensure critical service providers are registered for serverless environment
-        if (getenv('VERCEL') === '1') {
-            // Make sure View service is available
-            if (!$this->app->bound('view')) {
-                $this->app->register(\Illuminate\View\ViewServiceProvider::class);
-            }
-        }
+        //
     }
 
     /**
@@ -28,4 +22,3 @@ class AppServiceProvider extends ServiceProvider
         //
     }
 }
-
