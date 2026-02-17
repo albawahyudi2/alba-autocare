@@ -20,6 +20,12 @@ if (getenv('VERCEL') === '1') {
             @mkdir($dir, 0755, true);
         }
     }
+    
+    // Check if migrations need to be run
+    $migrationFlag = '/tmp/.migrations_run';
+    if (!file_exists($migrationFlag)) {
+        $runMigrations = true;
+    }
 }
 
 // Determine if the application is in maintenance mode...
@@ -37,6 +43,17 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 // Override storage path for Vercel
 if (getenv('VERCEL') === '1') {
     $app->useStoragePath('/tmp/storage');
+    
+    // Run migrations on first request
+    if (isset($runMigrations) && $runMigrations) {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+            file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
+            error_log('Migrations completed successfully');
+        } catch (\Exception $e) {
+            error_log('Migration failed: ' . $e->getMessage());
+        }
+    }
 }
 
 $app->handleRequest(Request::capture());
