@@ -5,8 +5,11 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Configure storage for Vercel (read-only filesystem)
+// Enable error reporting for debugging
 if (getenv('VERCEL') === '1') {
+    ini_set('display_errors', '1');
+    error_reporting(E_ALL);
+    
     // Create necessary directories in /tmp
     $tmpDirs = [
         '/tmp/storage/framework/cache',
@@ -20,12 +23,6 @@ if (getenv('VERCEL') === '1') {
             @mkdir($dir, 0755, true);
         }
     }
-    
-    // Check if migrations need to be run
-    $migrationFlag = '/tmp/.migrations_run';
-    if (!file_exists($migrationFlag)) {
-        $runMigrations = true;
-    }
 }
 
 // Determine if the application is in maintenance mode...
@@ -37,23 +34,25 @@ if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php'))
 require __DIR__.'/../vendor/autoload.php';
 
 // Bootstrap Laravel and handle the request...
-/** @var Application $app */
-$app = require_once __DIR__.'/../bootstrap/app.php';
-
-// Override storage path for Vercel
-if (getenv('VERCEL') === '1') {
-    $app->useStoragePath('/tmp/storage');
+try {
+    /** @var Application $app */
+    $app = require_once __DIR__.'/../bootstrap/app.php';
     
-    // Run migrations on first request
-    if (isset($runMigrations) && $runMigrations) {
-        try {
-            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
-            file_put_contents($migrationFlag, date('Y-m-d H:i:s'));
-            error_log('Migrations completed successfully');
-        } catch (\Exception $e) {
-            error_log('Migration failed: ' . $e->getMessage());
-        }
+    // Override storage path for Vercel
+    if (getenv('VERCEL') === '1') {
+        $app->useStoragePath('/tmp/storage');
     }
+    
+    $app->handleRequest(Request::capture());
+} catch (\Exception $e) {
+    // Show error for debugging
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => explode("\n", $e->getTraceAsString())
+    ], JSON_PRETTY_PRINT);
+    error_log('Laravel Error: ' . $e->getMessage());
 }
-
-$app->handleRequest(Request::capture());
