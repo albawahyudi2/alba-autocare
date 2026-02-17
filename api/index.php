@@ -1,17 +1,16 @@
 <?php
 
-// Optimize for serverless - disable opcache validation
-if (function_exists('opcache_reset')) {
-    opcache_reset();
-}
-
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
-// Configure storage for Vercel (read-only filesystem)
+// Configure storage for Vercel (read-only filesystem) - MUST BE BEFORE BOOTSTRAP
 if (getenv('VERCEL') === '1') {
+    // Set storage path as environment variable before Laravel loads
+    $_ENV['APP_STORAGE'] = '/tmp/storage';
+    putenv('APP_STORAGE=/tmp/storage');
+    
     // Create necessary directories in /tmp
     $tmpDirs = [
         '/tmp/storage/framework/cache/data',
@@ -39,9 +38,12 @@ require __DIR__.'/../vendor/autoload.php';
 try {
     $app = require_once __DIR__.'/../bootstrap/app.php';
     
-    // Override storage path for Vercel
+    // Override storage path for Vercel - set as early as possible
     if (getenv('VERCEL') === '1') {
         $app->useStoragePath('/tmp/storage');
+        
+        // Force override storage path in all configs
+        $app->instance('path.storage', '/tmp/storage');
     }
     
     $response = $app->handleRequest(Request::capture());
